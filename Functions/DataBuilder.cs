@@ -16,27 +16,44 @@ namespace Greasyfood_datapipeline.Functions
     public static class DataBuilder
     {
 
-        public static async Task<JObject> Build(JObject places)
+        public static void Build(JObject places)
         {
             foreach (JObject place in places["places"])
             {
-              
+
                 if ((place.ContainsKey("reviews")) && (place["reviews"] != null))
                 {
                     JObject reviewOBJ = getReviews(place);
-                    SentimentAnalyze.Run(reviewOBJ);
+                    JObject sentiments = SentimentAnalyze.Run(reviewOBJ);
+                    place["reviews"] = AddSentimentsToReviews(place, sentiments);
+                    place["averagesentiment"] = AddSentimentsToReviews(place, sentiments);
+
+                    Console.WriteLine(place);
                 }
                 else
                 {
                     Console.WriteLine("No reviews found");
                 }
             }
-            return places;
         }
 
-        public static JObject getReviews(JObject place)
+        private static JObject AddSentimentsToReviews(JObject place,JObject sentiments)
         {
-            JArray tmp = new ();
+            JArray tmp = new();
+            int i = 0;
+            foreach (JObject review in place["reviews"])
+            {
+                review["text"]["sentiment"] = sentiments["reviews"][i];
+                i++;   
+            }
+ 
+            return place;
+        }
+
+
+        private static JObject getReviews(JObject place)
+        {
+            JArray tmp = new();
             foreach (JObject review in place["reviews"])
             {
                 tmp.Add(review["text"]["text"]);
@@ -45,5 +62,5 @@ namespace Greasyfood_datapipeline.Functions
             returnJson["reviews"] = tmp;
             return returnJson;
         }
-    }
+    }     
 }
