@@ -1,28 +1,49 @@
-﻿using Microsoft.Azure.Functions.Worker;
+﻿using Microsoft.ApplicationInsights.Channel;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Greasyfood_datapipeline.Functions
 {
-    internal class DataBuilder
+    public static class DataBuilder
     {
-        private readonly ILogger _logger;
 
-        public DataBuilder(ILoggerFactory loggerFactory)
+        public static async Task<JObject> Build(JObject places)
         {
-            _logger = loggerFactory.CreateLogger<DataBuilder>();
+            foreach (JObject place in places["places"])
+            {
+              
+                if ((place.ContainsKey("reviews")) && (place["reviews"] != null))
+                {
+                    JObject reviewOBJ = getReviews(place);
+                    SentimentAnalyze.Run(reviewOBJ);
+                }
+                else
+                {
+                    Console.WriteLine("No reviews found");
+                }
+            }
+            return places;
         }
 
-        [Function("DataBuilder")]
-        public string Run([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req)
+        public static JObject getReviews(JObject place)
         {
-            _logger.LogInformation("DataBuilder triggered");
-            return "Hello from DataBuilder!";
+            JArray tmp = new ();
+            foreach (JObject review in place["reviews"])
+            {
+                tmp.Add(review["text"]["text"]);
+            }
+            JObject returnJson = new JObject();
+            returnJson["reviews"] = tmp;
+            return returnJson;
         }
     }
 }
