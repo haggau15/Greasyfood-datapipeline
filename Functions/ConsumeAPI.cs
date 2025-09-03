@@ -58,7 +58,7 @@ namespace Greasyfood_datapipeline.Functions
             // Required headers for Places API (field mask applies to response selection)
             httpClient.DefaultRequestHeaders.Add("X-Goog-Api-Key", ApiKey);
             httpClient.DefaultRequestHeaders.Add("X-Goog-FieldMask",
-                "places.reviews,places.reviewSummary,places.id,places.displayName,places.formattedAddress,places.location,places.types");
+                "places.reviews,places.photos,places.reviewSummary,places.id,places.displayName,places.formattedAddress,places.location,places.types");
 
             var requestBody = new
             {
@@ -67,7 +67,7 @@ namespace Greasyfood_datapipeline.Functions
                 {
                     circle = new
                     {
-                        center = new { latitude = 59.9139, longitude = 10.7522 },
+                        center = new { latitude = 59.913546, longitude = 10.7524953 },
                         radius = 100
                     }
                 }
