@@ -25,8 +25,9 @@ namespace Greasyfood_datapipeline.Functions
                 {
                     JObject reviewOBJ = getReviews(place);
                     JObject sentiments = SentimentAnalyze.Run(reviewOBJ);
-                    place["reviews"] = AddSentimentsToReviews(place, sentiments);
-                    place["averagesentiment"] = AddSentimentsToReviews(place, sentiments);
+                    Console.WriteLine(sentiments);
+                    place["reviews"] = AddSentimentsToReviews(place, sentiments)["reviews"];
+                    place["averagesentiment"] = AddAverageSentimentsToPlace(sentiments);
 
                     Console.WriteLine(place);
                 }
@@ -35,6 +36,27 @@ namespace Greasyfood_datapipeline.Functions
                     Console.WriteLine("No reviews found");
                 }
             }
+        }
+        private static JObject AddAverageSentimentsToPlace(JObject sentiments)
+        {
+            int i = 0;
+            float positive = 0;
+            float negative = 0;
+            float neutral = 0;
+            foreach (JObject sentiment in sentiments["reviews"])
+            {
+                positive += float.Parse(sentiment["Positive"].ToString());
+                negative += float.Parse(sentiment["Negative"].ToString());
+                neutral += float.Parse(sentiment["Neutral"].ToString());
+            }
+            JObject AverageSentiment = new()
+            {
+                ["Positive"] = (positive / sentiments["reviews"].Count()).ToString("0.00"),
+                ["Negative"] = (negative / sentiments["reviews"].Count()).ToString("0.00"),
+                ["Neutral"] = (neutral / sentiments["reviews"].Count()).ToString("0.00")
+            };
+
+            return AverageSentiment;
         }
 
         private static JObject AddSentimentsToReviews(JObject place,JObject sentiments)
