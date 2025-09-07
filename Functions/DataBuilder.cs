@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Greasyfood_datapipeline.Functions
@@ -16,27 +17,42 @@ namespace Greasyfood_datapipeline.Functions
     public static class DataBuilder
     {
 
-        public static void Build(JObject places)
+        public async static Task Build(JObject places, CancellationToken ct = default)
         {
+            var persistor = new TestPersistor(); // <-- one instance
             foreach (JObject place in places["places"])
             {
-
                 if ((place.ContainsKey("reviews")) && (place["reviews"] != null))
                 {
                     JObject reviewOBJ = getReviews(place);
                     JObject sentiments = SentimentAnalyze.Run(reviewOBJ);
-                    Console.WriteLine(sentiments);
+                    //Console.WriteLine(sentiments);
                     place["reviews"] = AddSentimentsToReviews(place, sentiments)["reviews"];
                     place["averagesentiment"] = AddAverageSentimentsToPlace(sentiments);
 
-                    Console.WriteLine(place);
+                    //Console.WriteLine(place);
                 }
                 else
                 {
+                    place["reviews"] = null;
                     Console.WriteLine("No reviews found");
                 }
+
+                place["greasereviews"] = "test";
+
+                if (place["reviews"] is JArray arr)
+                {
+                    // Minimal wrapper to satisfy ReviewsSection (only its inner "reviews" list)
+                    place["reviews"] = new JObject
+                    {
+                        ["reviews"] = arr
+                    };
+                }
+                PlaceDocument item = place.ToObject<PlaceDocument>();
+                await persistor.PersistToCosmos(item!, ct);   // <-- await
             }
         }
+
         private static JObject AddAverageSentimentsToPlace(JObject sentiments)
         {
             int i = 0;
