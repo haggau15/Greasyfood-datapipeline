@@ -1,4 +1,5 @@
-﻿using Microsoft.ApplicationInsights.Channel;
+﻿using Azure;
+using Microsoft.ApplicationInsights.Channel;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -19,9 +20,13 @@ namespace Greasyfood_datapipeline.Functions
 
         public async static Task Build(JObject places, CancellationToken ct = default)
         {
+            var placesArray = places["places"] as JArray;
+            if (placesArray == null || !placesArray.HasValues)
+            { return; }// No places found, exit
             var persistor = new TestPersistor(); // <-- one instance
             foreach (JObject place in places["places"])
-            {
+            {   
+
                 if ((place.ContainsKey("reviews")) && (place["reviews"] != null))
                 {
                     JObject reviewOBJ = getReviews(place);
@@ -49,7 +54,13 @@ namespace Greasyfood_datapipeline.Functions
                     };
                 }
                 PlaceDocument item = place.ToObject<PlaceDocument>();
-                await persistor.PersistToCosmos(item!, ct);   // <-- await
+                try
+                {
+                    await persistor.PersistToCosmos(item!, ct);   // <-- await
+                }
+                catch (Exception e) {
+                    //Duplicates are simply ignored
+                }
             }
         }
 
