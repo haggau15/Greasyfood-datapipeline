@@ -32,7 +32,7 @@ namespace Greasyfood_datapipeline.Functions
             
             var json = await Program.Maine();
             JObject jsonObj = JObject.Parse(json);
-            DataBuilder.Build(jsonObj);
+            await DataBuilder.Build(jsonObj);
 
 
 
