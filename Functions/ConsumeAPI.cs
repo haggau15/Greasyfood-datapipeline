@@ -33,9 +33,9 @@ namespace Greasyfood_datapipeline.Functions
             var json = await Program.Maine();
             JObject jsonObj = JObject.Parse(json);
             await DataBuilder.Build(jsonObj);
-
-
-
+            var placesArray = jsonObj["places"] as JArray;
+            if (placesArray == null || !placesArray.HasValues)
+            { return response; }// No places found, exit
             await response.WriteStringAsync(json, Encoding.UTF8); // ← write the JSON as-is
            
             return response;
@@ -67,8 +67,8 @@ namespace Greasyfood_datapipeline.Functions
                 {
                     circle = new
                     {
-                        center = new { latitude = 59.913546, longitude = 10.7524953 },
-                        radius = 100
+                        center = new { latitude = 56.454992, longitude = 4.206923 },
+                        radius = 500
                     }
                 }
             };
